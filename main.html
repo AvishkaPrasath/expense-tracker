@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .balance-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .balance-card {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .form-section, .transactions-section {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .transaction-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .income {
+            color: #28a745;
+        }
+
+        .expense {
+            color: #dc3545;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        .chart-container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+
+        .filter-section {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Expense Tracker</h1>
+        </div>
+
+        <div class="balance-container">
+            <div class="balance-card">
+                <h2>Total Balance</h2>
+                <h3 id="total-balance">$0.00</h3>
+            </div>
+            <div class="balance-card">
+                <h2>Total Income</h2>
+                <h3 id="total-income" class="income">$0.00</h3>
+            </div>
+            <div class="balance-card">
+                <h2>Total Expenses</h2>
+                <h3 id="total-expenses" class="expense">$0.00</h3>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="form-section">
+                <h2>Add Transaction</h2>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" id="description" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" required step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select id="type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="Salary">Salary</option>
+                            <option value="Food">Food</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Transaction</button>
+                </form>
+            </div>
+
+            <div class="transactions-section">
+                <h2>Transactions</h2>
+                <div class="filter-section">
+                    <label for="category-filter">Filter by Category:</label>
+                    <select id="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Food">Food</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="transaction-list" id="transaction-list">
+                    <!-- Transactions will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="expense-chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        class ExpenseTracker {
+            constructor() {
+                this.transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+                this.form = document.getElementById('transaction-form');
+                this.transactionList = document.getElementById('transaction-list');
+                this.categoryFilter = document.getElementById('category-filter');
+                this.chart = null;
+
+                this.initializeEventListeners();
+                this.updateUI();
+            }
+
+            initializeEventListeners() {
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTransaction();
+                });
+
+                this.categoryFilter.addEventListener('change', () => {
+                    this.updateTransactionList();
+                });
+            }
+
+            addTransaction() {
+                const description = document.getElementById('description').value;
+                const amount = parseFloat(document.getElementById('amount').value);
+                const type = document.getElementById('type').value;
+                const category = document.getElementById('category').value;
+
+                const transaction = {
+                    id: Date.now(),
+                    description,
+                    amount,
+                    type,
+                    category,
+                    date: new Date().toISOString()
+                };
+
+                this.transactions.push(transaction);
+                this.saveToLocalStorage();
+                this.updateUI();
+                this.form.reset();
+            }
+
+            deleteTransaction(id) {
+                this.transactions = this.transactions.filter(transaction => transaction.id !== id);
+                this.saveToLocalStorage();
+                this.updateUI();
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('transactions', JSON.stringify(this.transactions));
+            }
+
+            updateTransactionList() {
+                const selectedCategory = this.categoryFilter.value;
+                const filteredTransactions = selectedCategory === 'all' 
+                    ? this.transactions 
+                    : this.transactions.filter(t => t.category === selectedCategory);
+
+                this.transactionList.innerHTML = '';
+                
+                filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .forEach(transaction => {
+                        const div = document.createElement('div');
+                        div.className = 'transaction-item';
+                        div.innerHTML = `
+                            <div>
+                                <strong>${transaction.description}</strong><br>
+                                <small>${transaction.category}</small>
+                            </div>
+                            <span class="${transaction.type}">${transaction.type === 'income' ? '+' : '-'}$${Math.abs(transaction.amount).toFixed(2)}</span>
+                            <button class="delete-btn" onclick="expenseTracker.deleteTransaction(${transaction.id})">Delete</button>
+                        `;
+                        this.transactionList.appendChild(div);
+                    });
+            }
+
+            updateBalances() {
+                const income = this.transactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const expenses = this.transactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const balance = income - expenses;
+
+                document.getElementById('total-balance').textContent = `$${balance.toFixed(2)}`;
+                document.getElementById('total-income').textContent = `$${income.toFixed(2)}`;
+                document.getElementById('total-expenses').textContent = `$${expenses.toFixed(2)}`;
+            }
+
+            updateChart() {
+                const ctx = document.getElementById('expense-chart').getContext('2d');
+                
+                const categoryTotals = {};
+                this.transactions
+                    .filter(t => t.type === 'expense')
+                    .forEach(t => {
+                        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+                    });
+
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                this.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categoryTotals),
+                        datasets: [{
+                            data: Object.values(categoryTotals),
+                            backgroundColor: [
+                                '#ff6384',
+                                '#36a2eb',
+                                '#ffce56',
+                                '#4bc0c0',
+                                '#9966ff',
+                                '#ff9f40'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Expenses by Category'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateUI() {
+                this.updateTransactionList();
+                this.updateBalances();
+                this.updateChart();
+            }
+        }
+
+        const expenseTracker = new ExpenseTracker();
+    </script>
+</body>
+</html>
